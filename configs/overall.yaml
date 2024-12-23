@@ -4,7 +4,7 @@ use_gpu: True
 seed: [999]
 
 # multi-modal raw features
-data_path: '../data/'
+data_path: '/nas/MusicRecommendation/data/'
 inter_splitting_label: 'x_label'
 filter_out_cod_start_users: True
 is_multimodal_model: True
@@ -17,7 +17,7 @@ embedding_size: 64
 #embedding_size: 3780
 
 # training settings
-epochs: 1000
+epochs: 100
 stopping_step: 20
 train_batch_size: 2048
 learner: adam

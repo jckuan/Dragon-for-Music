@@ -59,7 +59,7 @@ if __name__ == 	'__main__':
                 tmp_d = yaml.safe_load(f)
                 config.update(tmp_d)
 
-    dataset_path = os.path.abspath('../' + config['data_path'] + dataset_name)
+    dataset_path = os.path.abspath(config['data_path'] + dataset_name)
     uid_field = config['USER_ID_FIELD']
     iid_field = config['ITEM_ID_FIELD']
     train_df = pd.read_csv(os.path.join(dataset_path, config['inter_file_name']), sep='\t')
