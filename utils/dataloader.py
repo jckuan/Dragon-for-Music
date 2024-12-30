@@ -100,7 +100,6 @@ class AbstractDataLoader(object):
         """
         raise NotImplementedError('Method [next_batch_data] should be implemented.')
 
-
 class TrainDataLoader(AbstractDataLoader):
     """
     General dataloader with negative sampling.

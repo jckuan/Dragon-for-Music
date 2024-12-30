@@ -109,9 +109,10 @@ def dict2str(result_dict):
         str: result str
     """
 
-    result_str = ''
+    result_list =   []
     for metric, value in result_dict.items():
-        result_str += str(metric) + ': ' + '%.04f' % value + '    '
+        result_list.append(f'{metric}: {value:.04f}')
+    result_str = ' | '.join(result_list)
     return result_str
 
 

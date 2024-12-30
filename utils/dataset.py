@@ -40,6 +40,7 @@ class RecDataset(object):
         if df is not None:
             self.df = df
             return
+        
         # if all files exists
         check_file_list = [self.config['inter_file_name']]
         if self.config['use_raw_features']:
@@ -238,15 +239,13 @@ class RecDataset(object):
         if self.uid_field:
             tmp_user_num = len(uni_u)
             avg_actions_of_users = self.inter_num/tmp_user_num
-            info.extend(['The number of users: {}'.format(tmp_user_num),
-                         'Average actions of users: {}'.format(avg_actions_of_users)])
+            info.append(f'#users: {tmp_user_num}, Avg actions of users: {avg_actions_of_users:.4f}')
         if self.iid_field:
             tmp_item_num = len(uni_i)
             avg_actions_of_items = self.inter_num/tmp_item_num
-            info.extend(['The number of items: {}'.format(tmp_item_num),
-                         'Average actions of items: {}'.format(avg_actions_of_items)])
-        info.append('The number of inters: {}'.format(self.inter_num))
+            info.append(f'#items: {tmp_item_num}, Avg actions of items: {avg_actions_of_items:.4f}')
+        info.append(f'#inters: {self.inter_num}')
         if self.uid_field and self.iid_field:
             sparsity = 1 - self.inter_num / tmp_user_num / tmp_item_num
-            info.append('The sparsity of the dataset: {}%'.format(sparsity * 100))
-        return '\n'.join(info)
+            info.append(f'Sparsity: {sparsity * 100:.4f}%')
+        return ' | '.join(info)
