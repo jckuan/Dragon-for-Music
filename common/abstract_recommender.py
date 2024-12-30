@@ -100,4 +100,4 @@ class GeneralRecommender(AbstractRecommender):
                 self.t_feat = torch.from_numpy(np.load(t_feat_file_path, allow_pickle=True)).type(torch.FloatTensor).to(
                     self.device)
 
-            # assert self.v_feat is not None or self.t_feat is not None, 'Features all NONE'
+            assert self.v_feat is not None or self.t_feat is not None, 'Features all NONE'
