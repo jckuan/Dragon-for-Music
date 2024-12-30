@@ -1,0 +1,14 @@
+Thu 26 Dec 2024 17:46:58 INFO █ Server: 	ml-dev1
+Thu 26 Dec 2024 17:46:58 INFO █ Dir   : 	/home/jordankuan/DRAGON
+Thu 26 Dec 2024 17:46:58 INFO █ Dataset   : sports | #users: 35598, Avg actions of users: 8.3245 | #items: 18357, Avg actions of items: 16.1430 | #inters: 296337 | Sparsity: 99.9547%
+Thu 26 Dec 2024 17:46:58 INFO █ Training  : sports | #users: 35598, Avg actions of users: 6.1354 | #items: 18352, Avg actions of items: 11.9011 | #inters: 218409 | Sparsity: 99.9666%
+Thu 26 Dec 2024 17:46:58 INFO █ Validation: sports | #users: 35598, Avg actions of users: 1.0646 | #items: 13342, Avg actions of items: 2.8406 | #inters: 37899 | Sparsity: 99.9920%
+Thu 26 Dec 2024 17:46:58 INFO █ Testing   : sports | #users: 35598, Avg actions of users: 1.1245 | #items: 13738, Avg actions of items: 2.9137 | #inters: 40029 | Sparsity: 99.9918%
+Thu 26 Dec 2024 17:47:08 INFO █ Parameters: ['mm_image_weight', 'k', 'u_layers', 'n_mm_layers', 'knn_k', 'aggr_mode', 'reg_weight', 'learning_rate', 'seed']
+Thu 26 Dec 2024 17:47:31 INFO Epoch 0: valid_score: 0.0641
+Thu 26 Dec 2024 17:47:31 INFO Valid result: recall@20: 0.0641 | ndcg@20: 0.0275 | precision@20: 0.0034 | map@20: 0.0171
+Thu 26 Dec 2024 17:47:31 INFO Test result : recall@20: 0.0635 | ndcg@20: 0.0277 | precision@20: 0.0036 | map@20: 0.0170
+Thu 26 Dec 2024 17:47:31 INFO █ DRAGON: Best validation results updated!
+Thu 26 Dec 2024 18:10:56 INFO Early stopping triggered at epoch 75
+Thu 26 Dec 2024 18:10:56 INFO Best valid result: recall@20: 0.1076 | ndcg@20: 0.0483 | precision@20: 0.0057 | map@20: 0.0313
+Thu 26 Dec 2024 18:10:56 INFO Test result: recall@20: 0.1120 | ndcg@20: 0.0495 | precision@20: 0.0062 | map@20: 0.0310

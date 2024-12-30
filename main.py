@@ -9,7 +9,7 @@ Main entry
 
 import os
 import argparse
-from utils.quick_start import quick_start
+from utils.quick_start import quick_start, quick_start_fix_params
 os.environ['NUMEXPR_MAX_THREADS'] = '48'
 
 
@@ -19,17 +19,13 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', '-d', type=str, default='clothing', help='name of datasets')
 
     config_dict = {
-        #'dropout': [0.2],
-        #'reg_weight': [1e-04, 1e-03],
-        'learning_rate': [1e-04],
-        #'reg_weight': [0.0001,0.00001],
-        #'n_layers': [2],
+        'learning_rate': [1e-4],
         'reg_weight': [0.001],
         'gpu_id': 0,
     }
 
     args, _ = parser.parse_known_args()
 
-    quick_start(model=args.model, dataset=args.dataset, config_dict=config_dict, save_model=True)
+    quick_start_fix_params(args.model, args.dataset, config_dict, save_model=True)
 
 
