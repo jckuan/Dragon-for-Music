@@ -1,0 +1,14 @@
+Wed 20 Aug 2025 16:06:55 INFO █ Server: 	Jordans-MacBook-Air.local
+Wed 20 Aug 2025 16:06:55 INFO █ Dir   : 	/Users/jckuan/Dev/MusicRec-PG/DRAGON
+Wed 20 Aug 2025 16:07:00 INFO █ Dataset   : sports | #users: 35598, Avg actions of users: 8.3245 | #items: 18357, Avg actions of items: 16.1430 | #inters: 296337 | Sparsity: 99.9547%
+Wed 20 Aug 2025 16:07:00 INFO █ Training  : sports | #users: 35598, Avg actions of users: 6.1354 | #items: 18352, Avg actions of items: 11.9011 | #inters: 218409 | Sparsity: 99.9666%
+Wed 20 Aug 2025 16:07:00 INFO █ Validation: sports | #users: 35598, Avg actions of users: 1.0646 | #items: 13342, Avg actions of items: 2.8406 | #inters: 37899 | Sparsity: 99.9920%
+Wed 20 Aug 2025 16:07:00 INFO █ Testing   : sports | #users: 35598, Avg actions of users: 1.1245 | #items: 13738, Avg actions of items: 2.9137 | #inters: 40029 | Sparsity: 99.9918%
+Wed 20 Aug 2025 16:07:04 INFO █ Parameters: ['mm_image_weight', 'k', 'u_layers', 'n_mm_layers', 'knn_k', 'aggr_mode', 'reg_weight', 'learning_rate', 'seed']
+Wed 20 Aug 2025 16:11:20 INFO Epoch 0: valid_score: 0.0009
+Wed 20 Aug 2025 16:11:20 INFO Valid result: recall@20: 0.0009 | ndcg@20: 0.0003 | precision@20: 0.0000 | map@20: 0.0001
+Wed 20 Aug 2025 16:11:20 INFO Test result : recall@20: 0.0012 | ndcg@20: 0.0005 | precision@20: 0.0001 | map@20: 0.0002
+Wed 20 Aug 2025 16:11:20 INFO █ DRAGON: Best validation results updated!
+Wed 20 Aug 2025 17:22:42 INFO Early stopping triggered at epoch 21
+Wed 20 Aug 2025 17:22:42 INFO Best valid result: recall@20: 0.0009 | ndcg@20: 0.0003 | precision@20: 0.0000 | map@20: 0.0001
+Wed 20 Aug 2025 17:22:42 INFO Test result: recall@20: 0.0012 | ndcg@20: 0.0005 | precision@20: 0.0001 | map@20: 0.0002
