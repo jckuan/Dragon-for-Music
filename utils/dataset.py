@@ -16,6 +16,10 @@ import numpy as np
 import torch
 from utils.data_utils import (ImageResize, ImagePad, image_to_tensor, load_decompress_img_from_lmdb_value)
 import lmdb
+from utils.gcs_utils import (
+    is_gcs_path, get_gcs_file_path, read_csv_from_gcs, file_exists,
+    create_local_cache_for_lmdb
+)
 
 
 class RecDataset(object):
@@ -25,7 +29,12 @@ class RecDataset(object):
 
         # data path & files
         self.dataset_name = config['dataset']
-        self.dataset_path = os.path.abspath(config['data_path']+self.dataset_name)
+        self.data_path = config['data_path']
+        
+        if is_gcs_path(self.data_path):
+            self.dataset_path = get_gcs_file_path(self.data_path, self.dataset_name)
+        else:
+            self.dataset_path = os.path.abspath(config['data_path']+self.dataset_name)
 
         # dataframe
         self.uid_field = self.config['USER_ID_FIELD']
@@ -46,9 +55,14 @@ class RecDataset(object):
         if self.config['use_raw_features']:
             check_file_list.extend([self.config['text_file_name'], self.config['img_dir_name']+'/data.mdb'])
         for i in check_file_list:
-            file_path = os.path.join(self.dataset_path, i)
-            if not os.path.isfile(file_path):
-                raise ValueError('File {} not exist'.format(file_path))
+            if is_gcs_path(self.dataset_path):
+                file_path = get_gcs_file_path(self.dataset_path, i)
+                if not file_exists(file_path):
+                    raise ValueError('File {} not exist'.format(file_path))
+            else:
+                file_path = os.path.join(self.dataset_path, i)
+                if not os.path.isfile(file_path):
+                    raise ValueError('File {} not exist'.format(file_path))
 
         # load rating file from data path?
         self.load_inter_graph(config['inter_file_name'])
@@ -56,9 +70,15 @@ class RecDataset(object):
         self.user_num = int(max(self.df[self.uid_field].values)) + 1
 
     def load_inter_graph(self, file_name):
-        inter_file = os.path.join(self.dataset_path, file_name)
-        cols = [self.uid_field, self.iid_field, self.splitting_label]
-        self.df = pd.read_csv(inter_file, usecols=cols, sep=self.config['field_separator'])
+        if is_gcs_path(self.dataset_path):
+            inter_file = get_gcs_file_path(self.dataset_path, file_name)
+            cols = [self.uid_field, self.iid_field, self.splitting_label]
+            self.df = read_csv_from_gcs(inter_file, usecols=cols, sep=self.config['field_separator'])
+        else:
+            inter_file = os.path.join(self.dataset_path, file_name)
+            cols = [self.uid_field, self.iid_field, self.splitting_label]
+            self.df = pd.read_csv(inter_file, usecols=cols, sep=self.config['field_separator'])
+        
         if not self.df.columns.isin(cols).all():
             raise ValueError('File {} lost some required columns.'.format(inter_file))
 
@@ -85,16 +105,26 @@ class RecDataset(object):
         return full_ds
 
     def _setup_features(self):
-        file_path = os.path.join(self.dataset_path, self.config['text_file_name'])
+        if is_gcs_path(self.dataset_path):
+            file_path = get_gcs_file_path(self.dataset_path, self.config['text_file_name'])
+        else:
+            file_path = os.path.join(self.dataset_path, self.config['text_file_name'])
+            
         # text中没有feature的补空
         _cnt_idx, com_sentences = 1, ['']       # item 0
         id_field, txt_featrue_field = self.config['ITEM_ID_FIELD'], self.config['TEXT_ID_FIELD']
         if self.dataset_name == 'ml-imdb':
             # [movieID,title,imdbID,genre,desc]
-            self.txt_df = pd.read_csv(file_path, usecols=['movieID', 'desc', 'genre'])
+            if is_gcs_path(self.dataset_path):
+                self.txt_df = read_csv_from_gcs(file_path, usecols=['movieID', 'desc', 'genre'])
+            else:
+                self.txt_df = pd.read_csv(file_path, usecols=['movieID', 'desc', 'genre'])
             #self.txt_df['desc'].fillna('', inplace=True)
         elif self.dataset_name == 'games' or self.dataset_name == 'cds':
-            self.txt_df = pd.read_csv(file_path, usecols=['itemID', 'description', 'title', 'category'])
+            if is_gcs_path(self.dataset_path):
+                self.txt_df = read_csv_from_gcs(file_path, usecols=['itemID', 'description', 'title', 'category'])
+            else:
+                self.txt_df = pd.read_csv(file_path, usecols=['itemID', 'description', 'title', 'category'])
             self.txt_df['description'] = self.txt_df['title'] + ' ' + self.txt_df['description']
         # For test
         for _, row in self.txt_df.iterrows():
@@ -154,7 +184,14 @@ class RecDataset(object):
     def load_img_features(self):
         ############## Image features
         max_img_size = self.config['max_img_size']
-        img_lmdb_dir = os.path.join(self.dataset_path, self.config['img_dir_name'])
+        
+        if is_gcs_path(self.dataset_path):
+            img_lmdb_path = get_gcs_file_path(self.dataset_path, self.config['img_dir_name'])
+            # Download LMDB from GCS to local cache
+            img_lmdb_dir = create_local_cache_for_lmdb(img_lmdb_path)
+        else:
+            img_lmdb_dir = os.path.join(self.dataset_path, self.config['img_dir_name'])
+            
         self.img_resize = ImageResize(max_img_size, "bilinear")  # longer side will be resized to max_img_size
         self.img_pad = ImagePad(max_img_size, max_img_size)  # pad to max_img_size * max_img_size
         self.env = lmdb.open(img_lmdb_dir, readonly=True, create=False)  # readahead=not _check_distributed()
@@ -183,8 +220,15 @@ class RecDataset(object):
         return transformed_img, 1
 
     def _extract_feat_remap_disk(self, u_id_map, i_id_map):
-        files = [os.path.join(self.dataset_path, '{}_feat_sample.npy'.format(i)) for i in 'atv']
-        self.atv_feats = [np.load(i, allow_pickle=True) if os.path.isfile(i) else None for i in files]
+        if is_gcs_path(self.dataset_path):
+            # For GCS, we would need to download these files to local cache first
+            # This is a placeholder - implement based on your specific needs
+            files = [get_gcs_file_path(self.dataset_path, '{}_feat_sample.npy'.format(i)) for i in 'atv']
+            # TODO: Implement GCS loading for these files
+            self.atv_feats = [None, None, None]  # Placeholder
+        else:
+            files = [os.path.join(self.dataset_path, '{}_feat_sample.npy'.format(i)) for i in 'atv']
+            self.atv_feats = [np.load(i, allow_pickle=True) if os.path.isfile(i) else None for i in files]
         print(len(self.atv_feats))
         # mapping
 

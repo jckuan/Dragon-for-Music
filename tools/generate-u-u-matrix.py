@@ -4,8 +4,23 @@ from tqdm import tqdm
 import torch
 import pandas as pd
 import os
+import sys
 import yaml
 import argparse
+
+# Get project root (two levels up from file1a.py)
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Add utils folder to sys.path if not already present
+utils_path = os.path.join(project_root, 'utils')
+if utils_path not in sys.path:
+    sys.path.insert(0, utils_path)
+
+from gcs_utils import (
+    is_gcs_path, get_gcs_file_path, read_csv_from_gcs, save_numpy_to_gcs,
+    file_exists, read_file_content
+)
+
 
 
 def gen_user_matrix(all_edge, no_users):
@@ -47,8 +62,7 @@ if __name__ == 	'__main__':
     print(f'Generating u-u matrix for {dataset_name} ...\n')
 
     config = {}
-    cur_dir = os.getcwd()
-    con_dir = os.path.join(os.path.dirname(cur_dir), 'configs') # get config dir
+    con_dir = os.path.join(project_root, 'configs') # get config dir
     overall_config_file = os.path.join(con_dir, "overall.yaml")
     dataset_config_file = os.path.join(con_dir, "dataset", f"{dataset_name}.yaml")
     conf_files = [overall_config_file, dataset_config_file]
@@ -59,10 +73,21 @@ if __name__ == 	'__main__':
                 tmp_d = yaml.safe_load(f)
                 config.update(tmp_d)
 
-    dataset_path = os.path.abspath(config['data_path'] + dataset_name)
+    # Handle both local and GCS data paths
+    data_path = config['data_path']
+    if is_gcs_path(data_path):
+        dataset_path = get_gcs_file_path(data_path, dataset_name)
+        inter_file_path = get_gcs_file_path(dataset_path, config['inter_file_name'])
+        
+        # Read CSV from GCS
+        train_df = read_csv_from_gcs(inter_file_path, sep='\t')
+    else:
+        dataset_path = os.path.abspath(config['data_path'] + dataset_name)
+        inter_file_path = os.path.join(dataset_path, config['inter_file_name'])
+        train_df = pd.read_csv(inter_file_path, sep='\t')
+    
     uid_field = config['USER_ID_FIELD']
     iid_field = config['ITEM_ID_FIELD']
-    train_df = pd.read_csv(os.path.join(dataset_path, config['inter_file_name']), sep='\t')
     num_user = len(pd.unique(train_df[uid_field]))
     train_df = train_df[train_df['x_label'] == 0].copy()
     train_data = train_df[[uid_field, iid_field]].to_numpy()
@@ -97,4 +122,11 @@ if __name__ == 	'__main__':
             edge_list = [edge_list_i, edge_list_j]
             user_graph_dict[i] = edge_list
     # pdb.set_trace()
-    np.save(os.path.join(dataset_path, config['user_graph_dict_file']), user_graph_dict, allow_pickle=True)
+    
+    # Save to GCS or local based on data path
+    output_file_path = get_gcs_file_path(dataset_path, config['user_graph_dict_file']) if is_gcs_path(data_path) else os.path.join(dataset_path, config['user_graph_dict_file'])
+    
+    if is_gcs_path(data_path):
+        save_numpy_to_gcs(user_graph_dict, output_file_path, allow_pickle=True)
+    else:
+        np.save(output_file_path, user_graph_dict, allow_pickle=True)

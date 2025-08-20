@@ -55,10 +55,18 @@ class DRAGON(GeneralRecommender):
         self.MLP_t = nn.Linear(self.dim_latent, self.dim_latent, bias=False)
         self.mm_adj = None
 
-        dataset_path = os.path.abspath(config['data_path'] + config['dataset'])
-        self.user_graph_dict = np.load(os.path.join(dataset_path, config['user_graph_dict_file']), allow_pickle=True).item()
+        from utils.gcs_utils import is_gcs_path, get_gcs_file_path, load_numpy_from_gcs, file_exists
         
-        mm_adj_file = os.path.join(dataset_path, 'mm_adj_{}.pt'.format(self.knn_k))
+        data_path = config['data_path']
+        if is_gcs_path(data_path):
+            dataset_path = get_gcs_file_path(data_path, config['dataset'])
+            user_graph_file_path = get_gcs_file_path(dataset_path, config['user_graph_dict_file'])
+            self.user_graph_dict = load_numpy_from_gcs(user_graph_file_path, allow_pickle=True).item()
+            mm_adj_file = get_gcs_file_path(dataset_path, 'mm_adj_{}.pt'.format(self.knn_k))
+        else:
+            dataset_path = os.path.abspath(config['data_path'] + config['dataset'])
+            self.user_graph_dict = np.load(os.path.join(dataset_path, config['user_graph_dict_file']), allow_pickle=True).item()
+            mm_adj_file = os.path.join(dataset_path, 'mm_adj_{}.pt'.format(self.knn_k))
 
         if self.v_feat is not None:
             self.image_embedding = nn.Embedding.from_pretrained(self.v_feat, freeze=False)
@@ -67,20 +75,38 @@ class DRAGON(GeneralRecommender):
             self.text_embedding = nn.Embedding.from_pretrained(self.t_feat, freeze=False)
             self.text_trs = nn.Linear(self.t_feat.shape[1], self.feat_embed_dim)
 
-        if os.path.exists(mm_adj_file):
-            self.mm_adj = torch.load(mm_adj_file)
+        # Handle loading/saving mm_adj for both local and GCS paths
+        if is_gcs_path(data_path):
+            from utils.gcs_utils import load_torch_from_gcs, save_torch_to_gcs
+            if file_exists(mm_adj_file):
+                self.mm_adj = load_torch_from_gcs(mm_adj_file)
+            else:
+                if self.v_feat is not None:
+                    indices, image_adj = self.get_knn_adj_mat(self.image_embedding.weight.detach())
+                    self.mm_adj = image_adj
+                if self.t_feat is not None:
+                    indices, text_adj = self.get_knn_adj_mat(self.text_embedding.weight.detach())
+                    self.mm_adj = text_adj
+                if self.v_feat is not None and self.t_feat is not None:
+                    self.mm_adj = self.mm_image_weight * image_adj + (1.0 - self.mm_image_weight) * text_adj
+                    del text_adj
+                    del image_adj
+                save_torch_to_gcs(self.mm_adj, mm_adj_file)
         else:
-            if self.v_feat is not None:
-                indices, image_adj = self.get_knn_adj_mat(self.image_embedding.weight.detach())
-                self.mm_adj = image_adj
-            if self.t_feat is not None:
-                indices, text_adj = self.get_knn_adj_mat(self.text_embedding.weight.detach())
-                self.mm_adj = text_adj
-            if self.v_feat is not None and self.t_feat is not None:
-                self.mm_adj = self.mm_image_weight * image_adj + (1.0 - self.mm_image_weight) * text_adj
-                del text_adj
-                del image_adj
-            torch.save(self.mm_adj, mm_adj_file)
+            if os.path.exists(mm_adj_file):
+                self.mm_adj = torch.load(mm_adj_file)
+            else:
+                if self.v_feat is not None:
+                    indices, image_adj = self.get_knn_adj_mat(self.image_embedding.weight.detach())
+                    self.mm_adj = image_adj
+                if self.t_feat is not None:
+                    indices, text_adj = self.get_knn_adj_mat(self.text_embedding.weight.detach())
+                    self.mm_adj = text_adj
+                if self.v_feat is not None and self.t_feat is not None:
+                    self.mm_adj = self.mm_image_weight * image_adj + (1.0 - self.mm_image_weight) * text_adj
+                    del text_adj
+                    del image_adj
+                torch.save(self.mm_adj, mm_adj_file)
 
         # packing interaction in training into edge_index
         train_interactions = dataset.inter_matrix(form='coo').astype(np.float32)

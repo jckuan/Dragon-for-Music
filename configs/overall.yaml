@@ -4,7 +4,9 @@ use_gpu: True
 seed: [999]
 
 # multi-modal raw features
-data_path: '/nas/MusicRecommendation/data/'
+# For GCS bucket, use format: 'gs://your-bucket-name/path/to/data/' or 'your-bucket-name/path/to/data/'
+# For local data, use absolute path: '/nas/MusicRecommendation/data/'
+data_path: 'gs://music4all/Dragon'  # Updated to use GCS bucket
 inter_splitting_label: 'x_label'
 filter_out_cod_start_users: True
 is_multimodal_model: True

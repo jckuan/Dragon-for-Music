@@ -7,6 +7,8 @@ from logging import getLogger
 
 import numpy as np
 
+# pos_index: (num_users, K), whether each recommended item at position i is relevant
+# pos_len:   (num_users,)  , number of relevant items for each user (ground truth)
 
 def recall_(pos_index, pos_len):
     # Recall: average single users recall ratio.
