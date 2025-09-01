@@ -273,7 +273,9 @@ class DRAGON(GeneralRecommender):
         item_rep = representation[self.num_user:]
 
         ############################################ multi-modal information aggregation
-        h = item_rep
+        device = torch.device('cuda:0')
+        self.mm_adj = self.mm_adj.to(device)
+        h = item_rep.to(device)
         for i in range(self.n_layers):
             h = torch.sparse.mm(self.mm_adj, h)
         h_u1 = self.user_graph(user_rep, self.epoch_user_graph, self.user_weight_matrix)
