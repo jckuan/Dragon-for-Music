@@ -22,7 +22,7 @@ def quick_start(model, dataset, config_dict, save_model=True):
     init_logger(config)
     logger = getLogger()
     logger.info('█ Server: \t' + platform.node())
-    logger.info('█ Data path: \t' + config['data_path'])
+    logger.info('█ Data  : \t' + config['data_path'])
     logger.info('█ Dir   : \t' + os.getcwd())
 
     ## Dataset Preparation
@@ -103,6 +103,7 @@ def quick_start_fix_params(model, dataset, config_dict, save_model=True):
     init_logger(config)
     logger = getLogger()
     logger.info('█ Server: \t' + platform.node())
+    logger.info('█ Data  : \t' + config['data_path'])
     logger.info('█ Dir   : \t' + os.getcwd())
 
     ## Dataset Preparation
