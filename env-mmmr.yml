@@ -183,4 +183,3 @@ dependencies:
     - transformers==4.46.3
     - werkzeug==3.0.6
     - yarl==1.15.2
-prefix: /Users/jckuan/miniforge3/envs/mmmr

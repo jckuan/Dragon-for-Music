@@ -109,7 +109,7 @@ class DRAGON(GeneralRecommender):
                 torch.save(self.mm_adj, mm_adj_file)
 
         # packing interaction in training into edge_index
-        train_interactions = dataset.inter_matrix(form='coo').astype(np.float32)
+        train_interactions = dataset.inter_matrix(form='coo').astype(float)
         edge_index = self.pack_edge_index(train_interactions)
         self.edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous().to(self.device)
         self.edge_index = torch.cat((self.edge_index, self.edge_index[[1, 0]]), dim=1)
@@ -280,10 +280,10 @@ class DRAGON(GeneralRecommender):
         h_u1 = self.user_graph(user_rep, self.epoch_user_graph, self.user_weight_matrix)
         user_rep = user_rep + h_u1
         item_rep = item_rep + h
-        result_embed = torch.cat((user_rep, item_rep), dim=0)
-        user_tensor = result_embed[user_nodes]
-        pos_item_tensor = result_embed[pos_item_nodes]
-        neg_item_tensor = result_embed[neg_item_nodes]
+        self.result_embed = torch.cat((user_rep, item_rep), dim=0)
+        user_tensor = self.result_embed[user_nodes]
+        pos_item_tensor = self.result_embed[pos_item_nodes]
+        neg_item_tensor = self.result_embed[neg_item_nodes]
         pos_scores = torch.sum(user_tensor * pos_item_tensor, dim=1)
         neg_scores = torch.sum(user_tensor * neg_item_tensor, dim=1)
         return pos_scores, neg_scores
